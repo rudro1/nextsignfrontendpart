@@ -74,8 +74,8 @@
 import axios from 'axios';
 
 const API = axios.create({ 
-  // ✅ Railway Backend URL (Railway ডিপ্লয় করার পর এই URL পাবেন)
-  baseURL: 'https://your-railway-project.railway.app/api', 
+  // ✅ Railway Backend URL
+  baseURL: 'https://nexsignbackendpart-production.up.railway.app/api', 
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
