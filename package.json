@@ -1,6 +1,6 @@
 {
-  "name": "magic-patterns-vite-template",
-  "version": "0.0.1",
+  "name": "fixensy-frontend",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,7 +13,6 @@
     "@emotion/react": "^11.13.3",
     "axios": "^1.13.6",
     "clsx": "latest",
-    "cors": "^2.8.6",
     "framer-motion": "^11.5.4",
     "lucide-react": "^0.522.0",
     "pdfjs-dist": "^5.5.207",
