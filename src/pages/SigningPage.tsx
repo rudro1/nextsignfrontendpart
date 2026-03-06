@@ -2223,16 +2223,20 @@ export function SigningPage() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [pageWidth, setPageWidth] = useState(600);
+  const [pageHeight, setPageHeight] = useState(842); // A4 default height
 
-  // ✅ Responsive PDF Width logic
+  // ✅ Responsive PDF Width & Height logic
   useEffect(() => {
-    const updateWidth = () => {
+    const updateDimensions = () => {
       const containerWidth = window.innerWidth < 640 ? window.innerWidth - 32 : 600;
       setPageWidth(containerWidth);
+      // Calculate height based on A4 ratio (210:297)
+      const aspectRatio = 297 / 210;
+      setPageHeight(containerWidth * aspectRatio);
     };
     
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
     
     if (id) {
       documentAPI.getById(id)
@@ -2246,7 +2250,7 @@ export function SigningPage() {
         });
     }
     
-    return () => window.removeEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateDimensions);
   }, [id]);
 
   const handleSignSubmit = async () => {
@@ -2347,6 +2351,7 @@ export function SigningPage() {
                   <Page 
                     pageNumber={i + 1} 
                     width={pageWidth} 
+                    height={pageHeight}
                     renderTextLayer={false} 
                     renderAnnotationLayer={false} 
                   />
@@ -2359,9 +2364,9 @@ export function SigningPage() {
                       className="absolute border-2 border-dashed border-sky-500 bg-sky-500/15 flex flex-col items-center justify-center cursor-pointer hover:bg-sky-500/25 transition-all rounded-lg group touch-manipulation"
                       style={{ 
                         left: (sig.x * pageWidth) / 600, 
-                        top: (sig.y * pageWidth) / 600, 
+                        top: (sig.y * pageHeight) / 842, 
                         width: (150 * pageWidth) / 600, 
-                        height: (50 * pageWidth) / 600 
+                        height: (50 * pageHeight) / 842 
                       }}
                     >
                       <PenTool size={14} className="text-sky-600 mb-1 group-hover:scale-110 transition-transform" />

@@ -97,5 +97,9 @@ export const documentAPI = {
   generateLink: (data) => API.post('/generate-link', data),
   getById: (id) => API.get(`/doc/${id}`),
   submitSign: (id, data) => API.post(`/submit-sign/${id}`, data),
-  verifyOtp: (data) => API.post('/verify-otp', data)
+  verifyOtp: (data) => API.post('/verify-otp', data),
+  // ✅ Download Route
+  downloadDocument: (id) => API.get(`/documents/download/${id}`),
+  // ✅ Preview Route
+  previewDocument: (id) => API.get(`/documents/preview/${id}`)
 };

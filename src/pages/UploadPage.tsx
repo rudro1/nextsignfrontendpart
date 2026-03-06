@@ -1487,6 +1487,167 @@
 //   );
 // }
 
+// import React, { useState, useRef, useEffect } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import { Sidebar } from '../components/Sidebar';
+// import { Button } from '../components/ui/Button';
+// import { Card } from '../components/ui/Card';
+// import { Upload, Move, Check, ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
+// import { documentAPI } from '../api/api';
+// import { Document, Page, pdfjs } from 'react-pdf';
+
+// import 'react-pdf/dist/Page/AnnotationLayer.css';
+// import 'react-pdf/dist/Page/TextLayer.css';
+
+// pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
+
+// export function UploadPage() {
+//   const navigate = useNavigate();
+//   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+//   const [step, setStep] = useState('upload');
+//   const [isUploading, setIsUploading] = useState(false);
+//   const [generatedLink, setGeneratedLink] = useState('');
+//   const [signatures, setSignatures] = useState([]);
+//   const [activeId, setActiveId] = useState(null);
+//   const [selectedFile, setSelectedFile] = useState(null);
+//   const [numPages, setNumPages] = useState(null);
+  
+//   const containerRef = useRef(null);
+//   const scrollParentRef = useRef(null);
+
+//   const addSignatureBox = () => {
+//     if (!containerRef.current || !scrollParentRef.current) return;
+//     const pageHeight = containerRef.current.scrollHeight / (numPages || 1);
+//     const scrollOffset = scrollParentRef.current.scrollTop;
+//     const currentPage = Math.floor((scrollOffset + 100) / pageHeight) + 1;
+
+//     setSignatures([...signatures, {
+//       id: Date.now(), x: 50, y: scrollOffset + 100, localY: (scrollOffset + 100) % pageHeight, page: currentPage 
+//     }]);
+//   };
+
+//   const handleGenerateLink = async () => {
+//     if (!selectedFile || signatures.length === 0) return alert("Please add a sign box!");
+//     setIsUploading(true);
+//     try {
+//       const data = new FormData();
+//       data.append("file", selectedFile);
+//       data.append("upload_preset", "fixensy_preset");
+//       data.append("cloud_name", "dxbpamnhh");
+
+//       const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/dxbpamnhh/auto/upload`, { method: "POST", body: data });
+//       const cloudData = await cloudRes.json();
+
+//       if (cloudData.secure_url) {
+//         const res = await documentAPI.generateLink({ 
+//           pdfPath: cloudData.secure_url, 
+//           signs: signatures.map(s => ({ id: s.id, x: s.x, y: s.localY, page: s.page })),
+//           name: selectedFile.name 
+//         });
+//         if (res.data.id) {
+//           setGeneratedLink(`${window.location.origin}/sign/${res.data.id}`);
+//           setStep('success');
+//         }
+//       } else {
+//         alert("Cloudinary Upload Error. Check your Preset!");
+//       }
+//     } catch (err) { 
+//       console.error(err);
+//       alert("Network Error or API Down!"); 
+//     } finally { setIsUploading(false); }
+//   };
+
+//   useEffect(() => {
+//     const handleMove = (e) => {
+//       if (activeId === null || !containerRef.current) return;
+//       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+//       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+//       const rect = containerRef.current.getBoundingClientRect();
+//       const pageHeight = containerRef.current.scrollHeight / (numPages || 1);
+//       const newX = Math.max(0, Math.min(clientX - rect.left - 75, rect.width - 150));
+//       const newY = Math.max(0, Math.min(clientY - rect.top - 25, rect.height - 50));
+      
+//       setSignatures(prev => prev.map(s => s.id === activeId ? { ...s, x: newX, y: newY, localY: newY % pageHeight, page: Math.floor(newY / pageHeight) + 1 } : s ));
+//     };
+//     const stopDrag = () => setActiveId(null);
+//     window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', stopDrag);
+//     window.addEventListener('touchmove', handleMove, { passive: false }); window.addEventListener('touchend', stopDrag);
+//     return () => { window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', stopDrag); window.removeEventListener('touchmove', handleMove); window.removeEventListener('touchend', stopDrag); };
+//   }, [activeId, numPages]);
+
+//   return (
+//     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row overflow-x-hidden">
+//       <Sidebar currentView="upload" isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+//       <main className="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 transition-all duration-300">
+//         <header className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4 text-left">
+//           <div className="flex items-center gap-4 w-full">
+//             <Button variant="ghost" onClick={() => navigate('/dashboard')} className="rounded-full hover:bg-slate-200"><ArrowLeft className="h-5 w-5" /></Button>
+//             <div>
+//               <h1 className="text-xl lg:text-3xl font-black text-slate-900 uppercase italic">Prepare Document</h1>
+//               <p className="text-xs lg:text-sm text-slate-500 font-bold uppercase tracking-widest">Position the signature boxes</p>
+//             </div>
+//           </div>
+//           {step === 'place' && <Button onClick={addSignatureBox} className="bg-sky-600 hover:bg-sky-700 text-white rounded-xl shadow-lg flex gap-2 w-full sm:w-auto font-black italic h-12 px-6 transition-all"><Plus className="h-4 w-4" /> ADD SIGN</Button>}
+//         </header>
+
+//         {step === 'upload' && (
+//           <div className="max-w-2xl mx-auto mt-12 bg-white p-10 lg:p-20 border-2 border-dashed border-slate-200 rounded-[2.5rem] text-center shadow-sm">
+//             <div className="bg-sky-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><Upload className="h-10 w-10 text-sky-500" /></div>
+//             <h3 className="text-xl font-bold text-slate-900 mb-2">Upload your PDF</h3>
+//             <Button onClick={() => document.getElementById('fileInput')?.click()} className="bg-sky-600 px-10 h-12 rounded-xl text-white font-bold hover:scale-105 transition-transform">Choose PDF File</Button>
+//             <input type="file" id="fileInput" accept=".pdf" onChange={(e) => { if (e.target.files?.[0]) { setSelectedFile(e.target.files[0]); setStep('place'); } }} className="hidden" />
+//           </div>
+//         )}
+
+//         {step === 'place' && (
+//           <div className="flex flex-col xl:flex-row gap-8 items-start justify-center">
+//             <div ref={scrollParentRef} className="w-full xl:w-[850px] bg-slate-300 rounded-[2rem] p-4 lg:p-10 overflow-auto border border-slate-400 h-[70vh] xl:h-[80vh] shadow-inner relative">
+//               <div ref={containerRef} className="relative mx-auto shadow-2xl bg-white select-none" style={{ width: '600px' }}>
+//                 <Document file={selectedFile} onLoadSuccess={({ numPages }) => setNumPages(numPages)}>
+//                   {Array.from(new Array(numPages || 0), (_, i) => (
+//                     <div key={i} className="mb-4 border-b last:border-0"><Page pageNumber={i + 1} width={600} renderTextLayer={false} renderAnnotationLayer={false} /></div>
+//                   ))}
+//                 </Document>
+//                 {signatures.map((sig) => (
+//                   <div key={sig.id} style={{ left: sig.x, top: sig.y, touchAction: 'none' }} onMouseDown={() => setActiveId(sig.id)} onTouchStart={() => setActiveId(sig.id)}
+//                     className="absolute z-[50] w-[150px] h-[50px] border-2 border-dashed border-sky-600 bg-sky-500/30 backdrop-blur-sm flex items-center justify-center cursor-move rounded-lg shadow-xl touch-manipulation"
+//                   >
+//                     <span className="text-[10px] font-black text-sky-900 uppercase flex items-center gap-1"><Move className="h-3 w-3" /> Sign Box</span>
+//                     <button onClick={(e) => { e.stopPropagation(); setSignatures(signatures.filter(s => s.id !== sig.id)); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md"><Trash2 className="h-3 w-3" /></button>
+//                   </div>
+//                 ))}
+//               </div>
+//             </div>
+//             <div className="w-full xl:w-80 space-y-6">
+//               <Card className="p-8 bg-white rounded-[2rem] border-none shadow-xl">
+//                 <h3 className="font-black text-slate-800 text-xs uppercase mb-6 border-b pb-4 italic tracking-widest">Info</h3>
+//                 <div className="flex justify-between mb-3 text-sm font-bold"><span className="text-slate-400">SIGN BOXES:</span><span className="text-sky-600">{signatures.length}</span></div>
+//                 <div className="flex justify-between text-sm font-bold"><span className="text-slate-400">TOTAL PAGES:</span><span className="text-slate-700">{numPages || 0}</span></div>
+//               </Card>
+//               <Button className="w-full bg-sky-600 hover:bg-sky-700 h-20 text-xl font-black text-white rounded-[2rem] shadow-2xl uppercase italic" onClick={handleGenerateLink} disabled={isUploading || signatures.length === 0}>
+//                 {isUploading ? <Loader2 className="animate-spin mx-auto h-8 w-8" /> : 'GENERATE LINK'}
+//               </Button>
+//             </div>
+//           </div>
+//         )}
+
+//         {step === 'success' && (
+//           <div className="max-w-xl mx-auto mt-10 text-center px-4 animate-in fade-in zoom-in">
+//              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><Check className="h-10 w-10 text-green-600" /></div>
+//             <h2 className="text-3xl font-black mb-2 uppercase italic">Success! Link Ready</h2>
+//             <div className="flex gap-3 p-5 bg-white border-2 border-slate-100 rounded-[2rem] mb-10 items-center shadow-inner">
+//               <input readOnly value={generatedLink} className="flex-1 bg-transparent px-4 text-sm truncate outline-none font-bold text-sky-700" />
+//               <Button onClick={() => { navigator.clipboard.writeText(generatedLink); alert("Copied!"); }} className="bg-slate-900 text-white px-6 h-12 rounded-2xl font-black text-xs">Copy</Button>
+//             </div>
+//             <Button className="w-full h-16 bg-sky-600 text-white rounded-[2rem] font-black uppercase tracking-widest" onClick={() => window.open(generatedLink, '_blank')}>OPEN SIGNING PAGE</Button>
+//           </div>
+//         )}
+//       </main>
+//     </div>
+//   );
+// }
+
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
@@ -1511,9 +1672,23 @@ export function UploadPage() {
   const [activeId, setActiveId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [numPages, setNumPages] = useState(null);
+  const [pdfWidth, setPdfWidth] = useState(600);
   
   const containerRef = useRef(null);
   const scrollParentRef = useRef(null);
+
+  // ✅ Responsive PDF Width
+  useEffect(() => {
+    const updateWidth = () => {
+      const width = window.innerWidth < 640 ? window.innerWidth - 32 : 600;
+      setPdfWidth(width);
+    };
+    
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   const addSignatureBox = () => {
     if (!containerRef.current || !scrollParentRef.current) return;
@@ -1532,7 +1707,7 @@ export function UploadPage() {
     try {
       const data = new FormData();
       data.append("file", selectedFile);
-      data.append("upload_preset", "fixensy_preset");
+      data.append("upload_preset", "Nexsign");
       data.append("cloud_name", "dxbpamnhh");
 
       const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/dxbpamnhh/auto/upload`, { method: "POST", body: data });
@@ -1557,22 +1732,45 @@ export function UploadPage() {
     } finally { setIsUploading(false); }
   };
 
+  // ✅ FIXED: Both Horizontal & Vertical Movement
   useEffect(() => {
     const handleMove = (e) => {
       if (activeId === null || !containerRef.current) return;
+      
+      // ✅ Get both X and Y coordinates
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      
       const rect = containerRef.current.getBoundingClientRect();
       const pageHeight = containerRef.current.scrollHeight / (numPages || 1);
+      
+      // ✅ Calculate both X and Y positions
       const newX = Math.max(0, Math.min(clientX - rect.left - 75, rect.width - 150));
       const newY = Math.max(0, Math.min(clientY - rect.top - 25, rect.height - 50));
       
-      setSignatures(prev => prev.map(s => s.id === activeId ? { ...s, x: newX, y: newY, localY: newY % pageHeight, page: Math.floor(newY / pageHeight) + 1 } : s ));
+      setSignatures(prev => prev.map(s => s.id === activeId ? { 
+        ...s, 
+        x: newX, 
+        y: newY, 
+        localY: newY % pageHeight, 
+        page: Math.floor(newY / pageHeight) + 1 
+      } : s ));
     };
+    
     const stopDrag = () => setActiveId(null);
-    window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', stopDrag);
-    window.addEventListener('touchmove', handleMove, { passive: false }); window.addEventListener('touchend', stopDrag);
-    return () => { window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', stopDrag); window.removeEventListener('touchmove', handleMove); window.removeEventListener('touchend', stopDrag); };
+    
+    // ✅ Add both mouse and touch events
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', stopDrag);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', stopDrag);
+    
+    return () => { 
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', stopDrag);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', stopDrag);
+    };
   }, [activeId, numPages]);
 
   return (
@@ -1594,6 +1792,10 @@ export function UploadPage() {
           <div className="max-w-2xl mx-auto mt-12 bg-white p-10 lg:p-20 border-2 border-dashed border-slate-200 rounded-[2.5rem] text-center shadow-sm">
             <div className="bg-sky-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><Upload className="h-10 w-10 text-sky-500" /></div>
             <h3 className="text-xl font-bold text-slate-900 mb-2">Upload your PDF</h3>
+            <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
+              Select a PDF document to prepare for electronic signature. 
+              You can add multiple signature boxes and position them anywhere on the document.
+            </p>
             <Button onClick={() => document.getElementById('fileInput')?.click()} className="bg-sky-600 px-10 h-12 rounded-xl text-white font-bold hover:scale-105 transition-transform">Choose PDF File</Button>
             <input type="file" id="fileInput" accept=".pdf" onChange={(e) => { if (e.target.files?.[0]) { setSelectedFile(e.target.files[0]); setStep('place'); } }} className="hidden" />
           </div>
@@ -1601,19 +1803,47 @@ export function UploadPage() {
 
         {step === 'place' && (
           <div className="flex flex-col xl:flex-row gap-8 items-start justify-center">
-            <div ref={scrollParentRef} className="w-full xl:w-[850px] bg-slate-300 rounded-[2rem] p-4 lg:p-10 overflow-auto border border-slate-400 h-[70vh] xl:h-[80vh] shadow-inner relative">
-              <div ref={containerRef} className="relative mx-auto shadow-2xl bg-white select-none" style={{ width: '600px' }}>
-                <Document file={selectedFile} onLoadSuccess={({ numPages }) => setNumPages(numPages)}>
+            {/* ✅ FIXED: Scrollable Container */}
+            <div 
+              ref={scrollParentRef} 
+              className="w-full xl:w-[850px] bg-slate-300 rounded-[2rem] p-4 lg:p-10 overflow-auto border border-slate-400 h-[70vh] xl:h-[80vh] shadow-inner relative"
+              style={{ 
+                overflow: 'auto',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
+              <div 
+                ref={containerRef} 
+                className="relative mx-auto shadow-2xl bg-white select-none" 
+                style={{ width: `${pdfWidth}px` }}
+              >
+                <Document 
+                  file={selectedFile} 
+                  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                  loading={<div className="p-20 text-center font-black text-slate-300 italic animate-pulse text-xl">PREPARING PDF...</div>}
+                  error={<div className="p-20 text-center font-black text-red-500 italic animate-pulse text-xl">PDF LOAD FAILED</div>}
+                >
                   {Array.from(new Array(numPages || 0), (_, i) => (
-                    <div key={i} className="mb-4 border-b last:border-0"><Page pageNumber={i + 1} width={600} renderTextLayer={false} renderAnnotationLayer={false} /></div>
+                    <div key={i} className="mb-4 border-b last:border-0">
+                      <Page pageNumber={i + 1} width={pdfWidth} renderTextLayer={false} renderAnnotationLayer={false} />
+                    </div>
                   ))}
                 </Document>
                 {signatures.map((sig) => (
-                  <div key={sig.id} style={{ left: sig.x, top: sig.y, touchAction: 'none' }} onMouseDown={() => setActiveId(sig.id)} onTouchStart={() => setActiveId(sig.id)}
+                  <div 
+                    key={sig.id} 
+                    style={{ left: sig.x, top: sig.y, touchAction: 'none' }} 
+                    onMouseDown={() => setActiveId(sig.id)} 
+                    onTouchStart={() => setActiveId(sig.id)}
                     className="absolute z-[50] w-[150px] h-[50px] border-2 border-dashed border-sky-600 bg-sky-500/30 backdrop-blur-sm flex items-center justify-center cursor-move rounded-lg shadow-xl touch-manipulation"
                   >
                     <span className="text-[10px] font-black text-sky-900 uppercase flex items-center gap-1"><Move className="h-3 w-3" /> Sign Box</span>
-                    <button onClick={(e) => { e.stopPropagation(); setSignatures(signatures.filter(s => s.id !== sig.id)); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md"><Trash2 className="h-3 w-3" /></button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setSignatures(signatures.filter(s => s.id !== sig.id)); }} 
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
                   </div>
                 ))}
               </div>
