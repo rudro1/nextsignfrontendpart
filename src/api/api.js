@@ -74,8 +74,8 @@
 import axios from 'axios';
 
 const API = axios.create({ 
-  // ✅ Notun Backend URL ta ekhane update kora hoyeche
-  baseURL: 'https://nexsignbackendpart.vercel.app/api', 
+  // ✅ Railway Backend URL (Railway ডিপ্লয় করার পর এই URL পাবেন)
+  baseURL: 'https://your-railway-project.railway.app/api', 
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
@@ -87,12 +87,7 @@ const API = axios.create({
 API.interceptors.response.use(
   response => response,
   error => {
-    // 💡 Network error ba CORS error thakle console-e bhalo bhabe dekha jabe
-    console.error('API Error details:', {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data
-    });
+    console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
