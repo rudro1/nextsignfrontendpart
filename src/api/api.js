@@ -74,8 +74,8 @@
 import axios from 'axios';
 
 const API = axios.create({ 
-  baseURL: 'https://nextsignbackend-bisal-sahas-projects.vercel.app/api', 
-  // withCredentials: true, // ❌ Remove this line
+  // ✅ Notun Backend URL ta ekhane update kora hoyeche
+  baseURL: 'https://nexsignbackendpart.vercel.app/api', 
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
@@ -87,7 +87,12 @@ const API = axios.create({
 API.interceptors.response.use(
   response => response,
   error => {
-    console.error('API Error:', error.response?.data || error.message);
+    // 💡 Network error ba CORS error thakle console-e bhalo bhabe dekha jabe
+    console.error('API Error details:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
     return Promise.reject(error);
   }
 );
