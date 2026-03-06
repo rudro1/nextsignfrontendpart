@@ -1877,8 +1877,6 @@
 //   );
 // }
 
-
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
@@ -1891,7 +1889,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// ✅ Standardized Worker CDN (Matches most react-pdf versions)
+// ✅ Fix 1: Versatile Worker CDN
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 export function UploadPage() {
@@ -1910,8 +1908,8 @@ export function UploadPage() {
   const containerRef = useRef(null);
   const scrollParentRef = useRef(null);
 
-  // ✅ Fix: Local File-ke Blob URL-e convert kora jeno render fail na kore
-  const fileSource = useMemo(() => {
+  // ✅ Fix 2: Convert File to a valid URL for react-pdf
+  const fileURL = useMemo(() => {
     if (!selectedFile) return null;
     return URL.createObjectURL(selectedFile);
   }, [selectedFile]);
@@ -1919,9 +1917,9 @@ export function UploadPage() {
   // Memory cleanup
   useEffect(() => {
     return () => {
-      if (fileSource) URL.revokeObjectURL(fileSource);
+      if (fileURL) URL.revokeObjectURL(fileURL);
     };
-  }, [fileSource]);
+  }, [fileURL]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -2032,11 +2030,10 @@ export function UploadPage() {
             <div ref={scrollParentRef} className="w-full xl:w-[850px] bg-slate-300 rounded-[2rem] p-4 lg:p-10 overflow-auto border border-slate-400 h-[70vh] xl:h-[80vh] shadow-inner relative">
               <div ref={containerRef} className="relative mx-auto shadow-2xl bg-white select-none" style={{ width: `${pdfWidth}px` }}>
                 <Document 
-                  file={fileSource} 
+                  file={fileURL} 
                   onLoadSuccess={({ numPages }) => { setNumPages(numPages); setPdfError(false); }}
+                  onLoadError={() => setPdfError(true)}
                   loading={<div className="p-20 text-center font-black text-slate-300 italic animate-pulse text-xl">PREPARING PDF...</div>}
-                  error={<div className="p-20 text-center font-black text-red-500 italic animate-pulse text-xl">PDF LOAD FAILED</div>}
-                  onLoadError={(err) => setPdfError(true)}
                 >
                   {Array.from(new Array(numPages || 0), (_, i) => (
                     <div key={i} className="mb-4 border-b last:border-0">
@@ -2044,7 +2041,14 @@ export function UploadPage() {
                     </div>
                   ))}
                 </Document>
-                {pdfError && <div className="absolute inset-0 flex items-center justify-center bg-white/90 z-[100]"><p className="text-red-500 font-bold">Failed to load PDF</p></div>}
+
+                {pdfError && (
+                  <div className="p-20 text-center">
+                    <p className="text-red-500 font-bold mb-4">PDF LOAD FAILED</p>
+                    <Button onClick={() => setStep('upload')} className="bg-slate-900 text-white px-4 py-2 rounded-lg">Try Another File</Button>
+                  </div>
+                )}
+
                 {signatures.map((sig) => (
                   <div key={sig.id} style={{ left: sig.x, top: sig.y, touchAction: 'none' }} onMouseDown={() => setActiveId(sig.id)} onTouchStart={() => setActiveId(sig.id)} className="absolute z-[50] w-[150px] h-[50px] border-2 border-dashed border-sky-600 bg-sky-500/30 backdrop-blur-sm flex items-center justify-center cursor-move rounded-lg shadow-xl">
                     <span className="text-[10px] font-black text-sky-900 uppercase flex items-center gap-1"><Move className="h-3 w-3" /> Sign Box</span>
